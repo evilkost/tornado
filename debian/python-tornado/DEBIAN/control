@@ -1,0 +1,12 @@
+Package: python-tornado
+Version: 0.1
+Architecture: amd64
+Maintainer: Valentin Gologuzov <vgol@yandex-team.ru>
+Installed-Size: 344
+Depends: libc6 (>= 2.3.2), python-pycurl (>= 7.16.2.1), python-simplejson
+Section: python
+Priority: optional
+Description: tornado web server
+ Tornado is an open source version of the scalable, non-blocking web server
+ and and tools that power FriendFeed. Documentation and downloads are
+ available at http://www.tornadoweb.org/
