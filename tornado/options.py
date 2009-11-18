@@ -52,7 +52,7 @@ import datetime
 import logging
 import re
 import sys
-import time
+import os.path
 
 # For pretty log messages, if available
 try:
@@ -138,6 +138,19 @@ def parse_config_file(path, overwrite=True):
         if name in options:
             options[name].set(config[name])
 
+
+def parse_config_files(paths):
+    """Tries to parse and load every Python config in given order, 
+    ignores missing files.
+    Returns list of actually loaded files."""
+    
+    configs = []
+    for config_name in paths:
+        if os.path.exists(config_name):
+            parse_config_file(config_name)
+            configs.append(config_name)
+    
+    return configs
 
 def print_help(file=sys.stdout):
     """Prints all the command line options to stdout."""
@@ -327,9 +340,8 @@ class _ColorLogFormatter(logging.Formatter):
             record.message = record.getMessage()
         except Exception, e:
             record.message = "Bad message (%r): %r" % (e, record.__dict__)
-        record.asctime = time.strftime(
-            "%y%m%d %H:%M:%S", self.converter(record.created))
-        prefix = '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d]' % \
+        record.asctime = self.formatTime(record)
+        prefix = '[%(levelname)1.1s %(asctime)s %(name)s]' % \
             record.__dict__
         color = self._colors.get(record.levelno, self._normal)
         formatted = color + prefix + self._normal + " " + record.message

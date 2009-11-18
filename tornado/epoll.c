@@ -50,7 +50,7 @@ static PyObject* _epoll_ctl(PyObject* self, PyObject* args) {
     event.events = events;
     event.data.fd = fd;
     if (epoll_ctl(epfd, op, fd, &event) == -1) {
-	PyErr_SetFromErrno(PyExc_OSError);
+	PyErr_SetFromErrno(PyExc_IOError);
 	return NULL;
     }
 

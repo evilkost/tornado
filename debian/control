@@ -1,0 +1,17 @@
+Source: tornado
+Maintainer: Facebook <python-tornado@googlegroups.com>
+Section: python
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), debhelper (>= 7), python-support (>= 0.8.4)
+Standards-Version: 3.7.2
+
+Package: python-tornado
+Architecture: all
+Depends: ${python:Depends}, 
+  python-pkg-resources,
+  python-pycurl,
+Recommends: 
+Suggests: 
+Provides: ${python:Provides}
+Description: Tornado
+

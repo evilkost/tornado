@@ -1,0 +1,7 @@
+tornado (0.2~hh1) unstable; urgency=low
+
+  * log handler name instead of filename
+  * + parse_config_files
+  * debianization
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Wed, 18 Nov 2009 15:34:07 +0300
