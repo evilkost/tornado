@@ -6,7 +6,7 @@ Build-Depends: python-setuptools (>= 0.6b3), debhelper (>= 7), python-support (>
 Standards-Version: 3.7.2
 
 Package: python-tornado
-Architecture: all
+Architecture: any
 Depends: ${python:Depends}, 
   python-pkg-resources,
   python-pycurl,

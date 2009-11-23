@@ -123,10 +123,6 @@ def parse_command_line(args=None):
         print_help()
         sys.exit(0)
 
-    # Set up log level and pretty console logging by default
-    logging.getLogger().setLevel(getattr(logging, options.logging.upper()))
-    enable_pretty_logging()
-
     return []
 
 
@@ -310,6 +306,29 @@ class Error(Exception):
     pass
 
 
+def process_options():
+    # Set up log level and pretty console logging by default
+    process_options_logging()
+    process_options_pidfile()
+
+
+def process_options_pidfile():
+    if options.pidfile:
+        pidfile = file(options.pidfile, 'w+')
+        pidfile.write(str(os.getpid()))
+        pidfile.close()
+
+
+def process_options_logging():
+    level = getattr(logging, options.loglevel.upper())
+
+    if options.logfile:
+        logging.basicConfig(filename=options.logfile, level=level,
+                            format="[%(process)s] %(asctime)s %(levelname)s %(name)s: %(message)s")
+    else:
+        logging.getLogger().setLevel(level)
+        enable_pretty_logging()
+
 def enable_pretty_logging():
     """Turns on colored logging output for stderr if we are in a tty."""
     if not curses: return
@@ -358,5 +377,7 @@ options = _Options.instance()
 
 # Default options
 define("help", type=bool, help="show this help information")
-define("logging", default="info", help="set the Python log level",
+define("loglevel", default="info", help="set the Python log level",
        metavar="info|warning|error")
+define("logfile", default=None, help="set the name of logfile")
+define("pidfile", default=None, help="set the name of pidfile")

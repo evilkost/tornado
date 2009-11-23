@@ -1,4 +1,16 @@
-tornado (0.2~hh1) unstable; urgency=low
+tornado (0.2~hh3) unstable; urgency=low
+
+  * basic pidfile support
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 23 Nov 2009 17:05:49 +0300
+
+tornado (0.2~hh2) unstable; urgency=low
+
+  * command-line options parsing improvements
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 23 Nov 2009 13:10:38 +0300
+
+tornado (0.2~hh1) stable; urgency=low
 
   * log handler name instead of filename
   * + parse_config_files
