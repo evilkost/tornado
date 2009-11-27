@@ -1,3 +1,9 @@
+tornado (0.2~hh4) unstable; urgency=low
+
+  * log tornado.httpclient
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Fri, 27 Nov 2009 15:20:01 +0400
+
 tornado (0.2~hh3) unstable; urgency=low
 
   * basic pidfile support
