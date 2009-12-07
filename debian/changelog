@@ -1,3 +1,9 @@
+tornado (0.2~hh5) unstable; urgency=low
+
+  * merge upstream changes
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon,  7 Dec 2009 15:30:10 +0400
+
 tornado (0.2~hh4) unstable; urgency=low
 
   * log tornado.httpclient
