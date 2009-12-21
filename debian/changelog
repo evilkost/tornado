@@ -1,3 +1,9 @@
+python-tornado (0.5) unstable; urgency=low
+
+  * merged from facebook upstream;
+
+ -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Mon, 21 Dec 2009 19:09:55 +0300
+
 python-tornado (0.4) unstable; urgency=low
 
   * merged from elephantum branch
