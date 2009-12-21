@@ -325,11 +325,6 @@ class RequestHandler(object):
                     css_files.extend(file_part)
             head_part = module.html_head()
             if head_part: html_heads.append(_utf8(head_part))
-        if js_embed:
-            js_embed = '<script type="text/javascript">\n//<![CDATA[\n' + \
-                '\n'.join(js_embed) + '\n//]]>\n</script>'
-            sloc = html.rindex('</body>')
-            html = html[:sloc] + js_embed + '\n' + html[sloc:]
         if js_files:
             paths = set()
             for path in js_files:
@@ -337,16 +332,16 @@ class RequestHandler(object):
                     paths.add(self.static_url(path))
                 else:
                     paths.add(path)
-            js_embed = ''.join('<script src="' + escape.xhtml_escape(p) +
-                                 '" type="text/javascript"></script>'
-                                 for p in paths)
+            js = ''.join('<script src="' + escape.xhtml_escape(p) +
+                         '" type="text/javascript"></script>'
+                         for p in paths)
             sloc = html.rindex('</body>')
-            html = html[:sloc] + js_embed + '\n' + html[sloc:]
-        if css_embed:
-            css_embed = '<style type="text/css">\n' + '\n'.join(css_embed) + \
-                '\n</style>'
-            hloc = html.index('</head>')
-            html = html[:hloc] + css_embed + '\n' + html[hloc:]
+            html = html[:sloc] + js + '\n' + html[sloc:]
+        if js_embed:
+            js = '<script type="text/javascript">\n//<![CDATA[\n' + \
+                '\n'.join(js_embed) + '\n//]]>\n</script>'
+            sloc = html.rindex('</body>')
+            html = html[:sloc] + js + '\n' + html[sloc:]
         if css_files:
             paths = set()
             for path in css_files:
@@ -354,11 +349,16 @@ class RequestHandler(object):
                     paths.add(self.static_url(path))
                 else:
                     paths.add(path)
-            css_embed = ''.join('<link href="' + escape.xhtml_escape(p) + '" '
-                                'type="text/css" rel="stylesheet"/>'
-                                for p in paths)
+            css = ''.join('<link href="' + escape.xhtml_escape(p) + '" '
+                          'type="text/css" rel="stylesheet"/>'
+                          for p in paths)
             hloc = html.index('</head>')
-            html = html[:hloc] + css_embed + '\n' + html[hloc:]
+            html = html[:hloc] + css + '\n' + html[hloc:]
+        if css_embed:
+            css = '<style type="text/css">\n' + '\n'.join(css_embed) + \
+                '\n</style>'
+            hloc = html.index('</head>')
+            html = html[:hloc] + css + '\n' + html[hloc:]
         if html_heads:
             hloc = html.index('</head>')
             html = html[:hloc] + ''.join(html_heads) + '\n' + html[hloc:]
@@ -590,6 +590,8 @@ class RequestHandler(object):
 
         See http://en.wikipedia.org/wiki/Cross-site_request_forgery
         """
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return
         token = self.get_argument("_xsrf", None)
         if not token:
             raise HTTPError(403, "'_xsrf' argument missing from POST")
@@ -692,11 +694,12 @@ class RequestHandler(object):
             self._handle_request_exception(e)
 
     def _generate_headers(self):
+        headers = self._headers
         for transform in self._transforms:
-            headers = transform.transform_headers(self._headers)
+            headers = transform.transform_headers(headers)
         lines = [self.request.version + " " + str(self._status_code) + " " +
                  httplib.responses[self._status_code]]
-        lines.extend(["%s: %s" % (n, v) for n, v in self._headers.iteritems()])
+        lines.extend(["%s: %s" % (n, v) for n, v in headers.iteritems()])
         for cookie_dict in getattr(self, "_new_cookies", []):
             for cookie in cookie_dict.values():
                 lines.append("Set-Cookie: " + cookie.OutputString(None))
@@ -1082,6 +1085,29 @@ class StaticFileHandler(RequestHandler):
             self.write(file.read())
         finally:
             file.close()
+
+
+class FallbackHandler(RequestHandler):
+    """A RequestHandler that wraps another HTTP server callback.
+
+    The fallback is a callable object that accepts an HTTPRequest,
+    such as an Application or tornado.wsgi.WSGIContainer.  This is most
+    useful to use both tornado RequestHandlers and WSGI in the same server.
+    Typical usage:
+        wsgi_app = tornado.wsgi.WSGIContainer(
+            django.core.handlers.wsgi.WSGIHandler())
+        application = tornado.web.Application([
+            (r"/foo", FooHandler),
+            (r".*", FallbackHandler, dict(fallback=wsgi_app),
+        ])
+    """
+    def __init__(self, app, request, fallback):
+        RequestHandler.__init__(self, app, request)
+        self.fallback = fallback
+
+    def prepare(self):
+        self.fallback(self.request)
+        self._finished = True
 
 
 class OutputTransform(object):

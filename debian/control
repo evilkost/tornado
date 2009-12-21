@@ -1,7 +1,7 @@
 Source: python-tornado
 Section: python
 Priority: optional
-Maintainer: Valentin Gologuzov <vgol@yandex-team.ru>
+Maintainer: Facebook <python-tornado@googlegroups.com>
 Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5), python-support (>= 0.5.3),
 XS-Python-Version: >=2.5
 Standards-Version: 3.7.2
@@ -14,3 +14,4 @@ Description: tornado web server
  Tornado is an open source version of the scalable, non-blocking web server
  and and tools that power FriendFeed. Documentation and downloads are
  available at http://www.tornadoweb.org/
+

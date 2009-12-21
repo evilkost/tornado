@@ -2,3 +2,10 @@
 *.so
 *~
 build
+debian/files
+debian/*.debhelper.log
+debian/*.debhelper
+debian/*.substvars
+debian/python-tornado/
+python-build-stamp-2.5
+
