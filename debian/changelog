@@ -1,3 +1,9 @@
+tornado (0.2~hh5ubuntu1) karmic; urgency=low
+
+  * rebuild on ubuntu
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 18 Jan 2010 00:12:45 +0300
+
 tornado (0.2~hh5) unstable; urgency=low
 
   * merge upstream changes
