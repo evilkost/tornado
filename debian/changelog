@@ -1,3 +1,9 @@
+tornado (0.2~hh6) unstable; urgency=low
+
+  * fix repository; karmic -> unstable
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 19 Jan 2010 16:59:20 +0400
+
 tornado (0.2~hh5ubuntu1) karmic; urgency=low
 
   * rebuild on ubuntu
