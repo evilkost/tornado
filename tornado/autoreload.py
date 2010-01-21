@@ -28,7 +28,7 @@ import os.path
 import sys
 
 
-def start(io_loop=None, check_time=500):
+def start(io_loop=None, check_time=500, watch_paths=[]):
     """Restarts the process automatically when a module is modified.
 
     We run on the I/O loop, and restarting is a destructive operation,
@@ -36,14 +36,16 @@ def start(io_loop=None, check_time=500):
     """
     io_loop = io_loop or ioloop.IOLoop.instance()
     modify_times = {}
-    callback = functools.partial(_reload_on_update, io_loop, modify_times)
+    callback = functools.partial(_reload_on_update, io_loop, modify_times, watch_paths)
     scheduler = ioloop.PeriodicCallback(callback, check_time, io_loop=io_loop)
     scheduler.start()
 
 
-def _reload_on_update(io_loop, modify_times):
+def _reload_on_update(io_loop, modify_times, watch_paths=[]):
     for module in sys.modules.values():
-        path = getattr(module, "__file__", None)
+        watch_paths.append(getattr(module, "__file__", None))
+
+    for path in watch_paths:
         if not path: continue
         if path.endswith(".pyc") or path.endswith(".pyo"):
             path = path[:-1]
