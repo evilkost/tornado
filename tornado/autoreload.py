@@ -42,17 +42,20 @@ def start(io_loop=None, check_time=500, watch_paths=[]):
 
 
 def _reload_on_update(io_loop, modify_times, watch_paths=[]):
-    for module in sys.modules.values():
-        watch_paths.append(getattr(module, "__file__", None))
+    files = [getattr(module, "__file__", None) for module in sys.modules.values()]
 
-    for path in watch_paths:
-        if not path: continue
+    for path in watch_paths + files:
+        if not path: 
+            continue
+
         if path.endswith(".pyc") or path.endswith(".pyo"):
             path = path[:-1]
+
         try:
             modified = os.stat(path).st_mtime
         except:
             continue
+
         if path not in modify_times:
             modify_times[path] = modified
             continue
