@@ -1,3 +1,9 @@
+tornado (0.2~hh8) unstable; urgency=low
+
+  * version bump
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Thu, 28 Jan 2010 17:31:14 +0400
+
 tornado (0.2~hh7) unstable; urgency=low
 
   * tornado.autorealod: +watch_paths
