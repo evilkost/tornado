@@ -258,10 +258,11 @@ class AsyncHTTPClient(object):
 class HTTPRequest(object):
     def __init__(self, url, method="GET", headers={}, body=None,
                  auth_username=None, auth_password=None,
-                 connect_timeout=None, request_timeout=None,
+                 connect_timeout=20.0, request_timeout=20.0,
                  if_modified_since=None, follow_redirects=True,
                  max_redirects=5, user_agent=None, use_gzip=True,
-                 network_interface=None, streaming_callback=None):
+                 network_interface=None, streaming_callback=None,
+                 prepare_curl_callback=None):
         if if_modified_since:
             timestamp = calendar.timegm(if_modified_since.utctimetuple())
             headers["If-Modified-Since"] = email.utils.formatdate(
@@ -274,14 +275,15 @@ class HTTPRequest(object):
         self.body = body
         self.auth_username = _utf8(auth_username)
         self.auth_password = _utf8(auth_password)
-        self.connect_timeout = connect_timeout or 20.0
-        self.request_timeout = request_timeout or 20.0
+        self.connect_timeout = connect_timeout
+        self.request_timeout = request_timeout
         self.follow_redirects = follow_redirects
         self.max_redirects = max_redirects
         self.user_agent = user_agent
         self.use_gzip = use_gzip
         self.network_interface = network_interface
         self.streaming_callback = streaming_callback
+        self.prepare_curl_callback = prepare_curl_callback
 
 
 class HTTPResponse(object):
@@ -318,7 +320,7 @@ class HTTPError(Exception):
         self.code = code
         message = message or httplib.responses.get(code, "Unknown")
         Exception.__init__(self, "HTTP %d: %s" % (self.code, message))
-                
+
 
 class CurlError(HTTPError):
     def __init__(self, errno, message):
@@ -405,6 +407,8 @@ def _curl_setup_request(curl, request, buffer, headers):
     else:
         curl.unsetopt(pycurl.USERPWD)
         log.info("%s %s", request.method, request.url)
+    if request.prepare_curl_callback is not None:
+        request.prepare_curl_callback(curl)
 
 
 def _curl_header_callback(headers, header_line):

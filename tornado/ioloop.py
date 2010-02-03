@@ -102,7 +102,7 @@ class IOLoop(object):
         """Returns a global IOLoop instance.
 
         Most single-threaded applications have a single, global IOLoop.
-        Use this method instead of passing around IOLoop instances 
+        Use this method instead of passing around IOLoop instances
         throughout your code.
 
         A common pattern for classes that depend on IOLoops is to use
@@ -180,7 +180,7 @@ class IOLoop(object):
             try:
                 event_pairs = self._impl.poll(poll_timeout)
             except Exception, e:
-                if e.args == (4, "Interrupted system call"):
+                if e.errno == errno.EINTR:
                     logging.warning("Interrupted system call", exc_info=1)
                     continue
                 else:
