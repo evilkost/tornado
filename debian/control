@@ -2,14 +2,14 @@ Source: python-tornado
 Section: python
 Priority: optional
 Maintainer: Facebook <python-tornado@googlegroups.com>
-Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5), python-support (>= 0.5.3),
 XS-Python-Version: >=2.5
+Build-Depends: cdbs (>= 0.4.49), python-setuptools (>= 0.6b3), debhelper (>= 5), python-support (>= 0.5.3)
 Standards-Version: 3.7.2
 
 Package: python-tornado
 Architecture: any
 XB-Python-Version: >= 2.5
-Depends: python-pycurl (>= 7.16.2.1), python-simplejson, ${shlibs:Depends}, ${misc:Depends}
+Depends: python-pycurl (>= 7.16.2.1), python-pkg-resources, python-simplejson, ${shlibs:Depends}, ${misc:Depends}
 Description: tornado web server
  Tornado is an open source version of the scalable, non-blocking web server
  and and tools that power FriendFeed. Documentation and downloads are
