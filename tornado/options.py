@@ -52,7 +52,7 @@ import datetime
 import logging
 import re
 import sys
-import os.path
+import time
 
 # For pretty log messages, if available
 try:
@@ -320,29 +320,34 @@ def process_options_logging():
         enable_pretty_logging()
 
 def enable_pretty_logging():
-    """Turns on colored logging output for stderr if we are in a tty."""
-    if not curses: return
-    try:
-        if not sys.stderr.isatty(): return
-        curses.setupterm()
-    except:
-        return
+    """Turns on formatted logging output as configured."""
+    # Set up color if we are in a tty and curses is installed
+    color = False
+    if curses and sys.stderr.isatty():
+        try:
+            curses.setupterm()
+            color = True
+        except:
+            pass
     channel = logging.StreamHandler()
-    channel.setFormatter(_ColorLogFormatter())
+    channel.setFormatter(_LogFormatter(color=color))
     logging.getLogger().addHandler(channel)
 
 
-class _ColorLogFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
+
+class _LogFormatter(logging.Formatter):
+    def __init__(self, color, *args, **kwargs):
         logging.Formatter.__init__(self, *args, **kwargs)
-        fg_color = curses.tigetstr("setaf") or curses.tigetstr("setf") or ""
-        self._colors = {
-            logging.DEBUG: curses.tparm(fg_color, 4), # Blue
-            logging.INFO: curses.tparm(fg_color, 2), # Green
-            logging.WARNING: curses.tparm(fg_color, 3), # Yellow
-            logging.ERROR: curses.tparm(fg_color, 1), # Red
-        }
-        self._normal = curses.tigetstr("sgr0")
+        self._color = color
+        if color:
+            fg_color = curses.tigetstr("setaf") or curses.tigetstr("setf") or ""
+            self._colors = {
+                logging.DEBUG: curses.tparm(fg_color, 4), # Blue
+                logging.INFO: curses.tparm(fg_color, 2), # Green
+                logging.WARNING: curses.tparm(fg_color, 3), # Yellow
+                logging.ERROR: curses.tparm(fg_color, 1), # Red
+            }
+            self._normal = curses.tigetstr("sgr0")
 
     def format(self, record):
         try:
@@ -352,8 +357,10 @@ class _ColorLogFormatter(logging.Formatter):
         record.asctime = self.formatTime(record)
         prefix = '[%(levelname)1.1s %(asctime)s %(name)s]' % \
             record.__dict__
-        color = self._colors.get(record.levelno, self._normal)
-        formatted = color + prefix + self._normal + " " + record.message
+        if self._color:
+            prefix = (self._colors.get(record.levelno, self._normal) +
+                      prefix + self._normal)
+        formatted = prefix + " " + record.message
         if record.exc_info:
             if not record.exc_text:
                 record.exc_text = self.formatException(record.exc_info)

@@ -266,14 +266,25 @@ class RequestHandler(object):
         value = "|".join([value, timestamp, signature])
         self.set_cookie(name, value, expires_days=expires_days, **kwargs)
 
-    def get_secure_cookie(self, name):
-        """Returns the given signed cookie if it validates, or None."""
-        value = self.get_cookie(name)
+    def get_secure_cookie(self, name, include_name=True, value=None):
+        """Returns the given signed cookie if it validates, or None.
+
+        In older versions of Tornado (0.1 and 0.2), we did not include the
+        name of the cookie in the cookie signature. To read these old-style
+        cookies, pass include_name=False to this method. Otherwise, all
+        attempts to read old-style cookies will fail (and you may log all
+        your users out whose cookies were written with a previous Tornado
+        version).
+        """
+        if value is None: value = self.get_cookie(name)
         if not value: return None
         parts = value.split("|")
         if len(parts) != 3: return None
-        if not _time_independent_equals(parts[2],
-                    self._cookie_signature(name, parts[0], parts[1])):
+        if include_name:
+            signature = self._cookie_signature(name, parts[0], parts[1])
+        else:
+            signature = self._cookie_signature(parts[0], parts[1])
+        if not _time_independent_equals(parts[2], signature):
             logging.warning("Invalid cookie signature %r", value)
             return None
         timestamp = int(parts[1])
@@ -347,25 +358,18 @@ class RequestHandler(object):
             head_part = module.html_head()
             if head_part: html_heads.append(_utf8(head_part))
         if js_files:
-            paths = {}
+            # Maintain order of JavaScript files given by modules
+            paths = []
+            unique_paths = set()
             for path in js_files:
                 if not path.startswith("/") and not path.startswith("http:"):
-                    paths[path] = self.static_url(path)
-                else:
-                    paths[path] = path
-
-            used_paths = set()
-            resolved_paths = []
-            for path in js_files:
-              resolved = paths[path]
-              if resolved in used_paths:
-                continue
-              used_paths.add(resolved)
-              resolved_paths.append(resolved)
-
+                    path = self.static_url(path)
+                if path not in unique_paths:
+                    paths.append(path)
+                    unique_paths.add(path)
             js = ''.join('<script src="' + escape.xhtml_escape(p) +
                          '" type="text/javascript"></script>'
-                         for p in resolved_paths)
+                         for p in paths)
             sloc = html.rindex('</body>')
             html = html[:sloc] + js + '\n' + html[sloc:]
         if js_embed:
@@ -909,12 +913,12 @@ class Application(object):
             handlers = list(handlers or [])
             static_url_prefix = settings.get("static_url_prefix",
                                              "/static/")
-            handlers.extend([
+            handlers = [
                 (re.escape(static_url_prefix) + r"(.*)", StaticFileHandler,
                  dict(path=path)),
                 (r"/(favicon\.ico)", StaticFileHandler, dict(path=path)),
                 (r"/(robots\.txt)", StaticFileHandler, dict(path=path)),
-            ])
+            ] + handlers
         if handlers: self.add_handlers(".*$", handlers)
 
         # Automatically reload modified modules
@@ -1106,7 +1110,6 @@ class StaticFileHandler(RequestHandler):
         modified = datetime.datetime.fromtimestamp(stat_result[stat.ST_MTIME])
 
         self.set_header("Last-Modified", modified)
-        self.set_header("Content-Length", stat_result[stat.ST_SIZE])
         if "v" in self.request.arguments:
             self.set_header("Expires", datetime.datetime.utcnow() + \
                                        datetime.timedelta(days=365*10))
@@ -1129,6 +1132,7 @@ class StaticFileHandler(RequestHandler):
 
         if not include_body:
             return
+        self.set_header("Content-Length", stat_result[stat.ST_SIZE])
         file = open(abspath, "r")
         try:
             self.write(file.read())
