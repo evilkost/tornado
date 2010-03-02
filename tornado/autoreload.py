@@ -27,8 +27,9 @@ import os
 import os.path
 import sys
 
+log = logging.getLogger('tornado.autoreload')
 
-def start(io_loop=None, check_time=500, watch_paths=[]):
+def start(io_loop=None, check_time=500):
     """Restarts the process automatically when a module is modified.
 
     We run on the I/O loop, and restarting is a destructive operation,
@@ -36,15 +37,22 @@ def start(io_loop=None, check_time=500, watch_paths=[]):
     """
     io_loop = io_loop or ioloop.IOLoop.instance()
     modify_times = {}
-    callback = functools.partial(_reload_on_update, io_loop, modify_times, watch_paths)
+    callback = functools.partial(_reload_on_update, io_loop, modify_times)
     scheduler = ioloop.PeriodicCallback(callback, check_time, io_loop=io_loop)
     scheduler.start()
 
+# global list of watched files
+# typical use case: monitor changes in config and reload app
+_watched_files = list()
 
-def _reload_on_update(io_loop, modify_times, watch_paths=[]):
-    files = [getattr(module, "__file__", None) for module in sys.modules.values()]
+def watch_file(filename):
+    log.debug('watch file %s', filename)
+    _watched_files.append(filename)
 
-    for path in watch_paths + files:
+def _reload_on_update(io_loop, modify_times):
+    module_files = [getattr(module, "__file__", None) for module in sys.modules.values()]
+
+    for path in _watched_files + module_files:
         if not path: 
             continue
 
@@ -60,7 +68,7 @@ def _reload_on_update(io_loop, modify_times, watch_paths=[]):
             modify_times[path] = modified
             continue
         if modify_times[path] != modified:
-            logging.info("%s modified; restarting server", path)
+            log.info("%s modified; restarting server", path)
             for fd in io_loop._handlers.keys():
                 try:
                     os.close(fd)

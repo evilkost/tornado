@@ -138,19 +138,6 @@ def parse_config_file(path, overwrite=True):
             options[name].set(config[name])
 
 
-def parse_config_files(paths):
-    """Tries to parse and load every Python config in given order, 
-    ignores missing files.
-    Returns list of actually loaded files."""
-    
-    configs = []
-    for config_name in paths:
-        if os.path.exists(config_name):
-            parse_config_file(config_name)
-            configs.append(config_name)
-    
-    return configs
-
 def print_help(file=sys.stdout):
     """Prints all the command line options to stdout."""
     print >> file, "Usage: %s [OPTIONS]" % sys.argv[0]

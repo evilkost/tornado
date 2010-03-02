@@ -1,3 +1,10 @@
+tornado (0.2~hh9) unstable; urgency=low
+
+  * add arbitary files watchlist in tornado.autoreload
+  * remove tornado.options.parse_config_files
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue,  2 Mar 2010 13:26:43 +0400
+
 tornado (0.2~hh8) unstable; urgency=low
 
   * version bump
