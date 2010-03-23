@@ -1,3 +1,9 @@
+tornado (0.2~hh11) unstable; urgency=low
+
+  * merge with facebook/tornado
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 23 Mar 2010 15:50:22 +0400
+
 tornado (0.2~hh10.1) unstable; urgency=low
 
   * bugfix tornado.options
