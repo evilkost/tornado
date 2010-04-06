@@ -70,6 +70,7 @@ import urllib
 import urlparse
 import uuid
 
+_log = logging.getLogger('tornado.web')
 
 class RequestHandler(object):
     """Subclass this class and define get() or post() to make a handler.
@@ -285,11 +286,11 @@ class RequestHandler(object):
         else:
             signature = self._cookie_signature(parts[0], parts[1])
         if not _time_independent_equals(parts[2], signature):
-            logging.warning("Invalid cookie signature %r", value)
+            _log.warning("Invalid cookie signature %r", value)
             return None
         timestamp = int(parts[1])
         if timestamp < time.time() - 31 * 86400:
-            logging.warning("Expired cookie %r", value)
+            _log.warning("Expired cookie %r", value)
             return None
         try:
             return base64.b64decode(parts[0])
@@ -338,6 +339,7 @@ class RequestHandler(object):
         css_embed = []
         css_files = []
         html_heads = []
+        html_bodies = []
         for module in getattr(self, "_active_modules", {}).itervalues():
             embed_part = module.embedded_javascript()
             if embed_part: js_embed.append(_utf8(embed_part))
@@ -357,6 +359,8 @@ class RequestHandler(object):
                     css_files.extend(file_part)
             head_part = module.html_head()
             if head_part: html_heads.append(_utf8(head_part))
+            body_part = module.html_body()
+            if body_part: html_bodies.append(_utf8(body_part))
         if js_files:
             # Maintain order of JavaScript files given by modules
             paths = []
@@ -397,7 +401,9 @@ class RequestHandler(object):
         if html_heads:
             hloc = html.index('</head>')
             html = html[:hloc] + ''.join(html_heads) + '\n' + html[hloc:]
-
+        if html_bodies:
+            hloc = html.index('</body>')
+            html = html[:hloc] + ''.join(html_bodies) + '\n' + html[hloc:]
         self.finish(html)
 
     def render_string(self, template_name, **kwargs):
@@ -499,7 +505,7 @@ class RequestHandler(object):
         for your application.
         """
         if self._headers_written:
-            logging.error("Cannot send error response after headers written")
+            _log.error("Cannot send error response after headers written")
             if not self._finished:
                 self.finish()
             return
@@ -673,7 +679,7 @@ class RequestHandler(object):
                 hashes[path] = hashlib.md5(f.read()).hexdigest()
                 f.close()
             except:
-                logging.error("Could not open static file %r", path)
+                _log.error("Could not open static file %r", path)
                 hashes[path] = None
         base = self.request.protocol + "://" + self.request.host \
             if getattr(self, "include_host", False) else ""
@@ -697,7 +703,7 @@ class RequestHandler(object):
                 return callback(*args, **kwargs)
             except Exception, e:
                 if self._headers_written:
-                    logging.error("Exception after headers written",
+                    _log.error("Exception after headers written",
                                   exc_info=True)
                 else:
                     self._handle_request_exception(e)
@@ -742,11 +748,11 @@ class RequestHandler(object):
 
     def _log(self):
         if self._status_code < 400:
-            log_method = logging.info
+            log_method = _log.info
         elif self._status_code < 500:
-            log_method = logging.warning
+            log_method = _log.warning
         else:
-            log_method = logging.error
+            log_method = _log.error
         request_time = 1000.0 * self.request.request_time()
         log_method("%d %s %.2fms", self._status_code,
                    self._request_summary(), request_time)
@@ -760,14 +766,14 @@ class RequestHandler(object):
             if e.log_message:
                 format = "%d %s: " + e.log_message
                 args = [e.status_code, self._request_summary()] + list(e.args)
-                logging.warning(format, *args)
+                _log.warning(format, *args)
             if e.status_code not in httplib.responses:
-                logging.error("Bad HTTP status code: %d", e.status_code)
+                _log.error("Bad HTTP status code: %d", e.status_code)
                 self.send_error(500, exception=e)
             else:
                 self.send_error(e.status_code, exception=e)
         else:
-            logging.error("Uncaught exception %s\n%r", self._request_summary(),
+            _log.error("Uncaught exception %s\n%r", self._request_summary(),
                           self.request, exc_info=e)
             self.send_error(500, exception=e)
 
@@ -933,7 +939,15 @@ class Application(object):
         if not host_pattern.endswith("$"):
             host_pattern += "$"
         handlers = []
-        self.handlers.append((re.compile(host_pattern), handlers))
+        # The handlers with the wildcard host_pattern are a special
+        # case - they're added in the constructor but should have lower
+        # precedence than the more-precise handlers added later.
+        # If a wildcard handler group exists, it should always be last
+        # in the list, so insert new groups just before it.
+        if self.handlers and self.handlers[-1][0].pattern == '.*$':
+            self.handlers.insert(-1, (re.compile(host_pattern), handlers))
+        else:
+            self.handlers.append((re.compile(host_pattern), handlers))
 
         for spec in host_handlers:
             if type(spec) is type(()):
@@ -947,6 +961,10 @@ class Application(object):
                 spec = URLSpec(pattern, handler, kwargs)
             handlers.append(spec)
             if spec.name:
+                if spec.name in self.named_handlers:
+                    _log.warning(
+                        "Multiple handlers named %s; replacing previous value",
+                        spec.name)
                 self.named_handlers[spec.name] = spec
 
     def add_transform(self, transform_class):
@@ -1104,7 +1122,7 @@ class StaticFileHandler(RequestHandler):
     """
     def __init__(self, application, request, path):
         RequestHandler.__init__(self, application, request)
-        self.root = os.path.abspath(path) + "/"
+        self.root = os.path.abspath(path) + os.path.sep
 
     def head(self, path):
         self.get(path, include_body=False)
@@ -1145,7 +1163,7 @@ class StaticFileHandler(RequestHandler):
         if not include_body:
             return
         self.set_header("Content-Length", stat_result[stat.ST_SIZE])
-        file = open(abspath, "r")
+        file = open(abspath, "rb")
         try:
             self.write(file.read())
         finally:
@@ -1318,6 +1336,10 @@ class UIModule(object):
 
     def html_head(self):
         """Returns a CSS string that will be put in the <head/> element"""
+        return None
+
+    def html_body(self):
+        """Returns an HTML string that will be put in the <body/> element"""
         return None
 
     def render_string(self, path, **kwargs):

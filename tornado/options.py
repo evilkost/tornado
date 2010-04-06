@@ -50,6 +50,7 @@ for define() below.
 
 import datetime
 import logging
+import logging.handlers
 import re
 import sys
 import time
@@ -170,7 +171,7 @@ class _Options(dict):
     def __getattr__(self, name):
         if isinstance(self.get(name), _Option):
             return self[name].value()
-        raise Error("Unrecognized option %r" % name)
+        raise AttributeError("Unrecognized option %r" % name)
 
 
 class _Option(object):
@@ -322,17 +323,20 @@ def process_options_logging():
 
 def enable_pretty_logging():
     """Turns on formatted logging output as configured."""
-    # Set up color if we are in a tty and curses is installed
-    color = False
-    if curses and sys.stderr.isatty():
-        try:
-            curses.setupterm()
-            color = True
-        except:
-            pass
-    channel = logging.StreamHandler()
-    channel.setFormatter(_LogFormatter(color=color))
-    logging.getLogger().addHandler(channel)
+    if (options.log_to_stderr or
+        (options.log_to_stderr is None and not options.log_file_prefix)):
+        # Set up color if we are in a tty and curses is installed
+        color = False
+        if curses and sys.stderr.isatty():
+            try:
+                curses.setupterm()
+                if curses.tigetnum("colors") > 0:
+                    color = True
+            except:
+                pass
+        channel = logging.StreamHandler()
+        channel.setFormatter(_LogFormatter(color=color))
+        logging.getLogger().addHandler(channel)
 
 
 
