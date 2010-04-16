@@ -81,6 +81,11 @@ class RequestHandler(object):
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT")
 
+    _DEFAULT_HEADERS = {
+        "Server": "TornadoServer/0.1",
+        "Content-Type": "text/html; charset=UTF-8",
+    }
+
     def __init__(self, application, request, transforms=None):
         self.application = application
         self.request = request
@@ -141,10 +146,7 @@ class RequestHandler(object):
 
     def clear(self):
         """Resets all headers and content for this response."""
-        self._headers = {
-            "Server": "TornadoServer/0.1",
-            "Content-Type": "text/html; charset=UTF-8",
-        }
+        self._headers = {}
         if not self.request.supports_http_1_1():
             if self.request.headers.get("Connection") == "Keep-Alive":
                 self.set_header("Connection", "Keep-Alive")
@@ -450,6 +452,8 @@ class RequestHandler(object):
         self._write_buffer = []
         if not self._headers_written:
             self._headers_written = True
+            # set default values for 'Content-Type' and 'Server'
+            self._headers = dict(self._DEFAULT_HEADERS.items() + self._headers.items())
             for transform in self._transforms:
                 self._headers, chunk = transform.transform_first_chunk(
                     self._headers, chunk, include_footers)
