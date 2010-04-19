@@ -321,10 +321,10 @@ def process_options_logging():
         logging.getLogger().setLevel(level)
         enable_pretty_logging()
 
+
 def enable_pretty_logging():
     """Turns on formatted logging output as configured."""
-    if (options.log_to_stderr or
-        (options.log_to_stderr is None and not options.log_file_prefix)):
+    if options.logfile is None:
         # Set up color if we are in a tty and curses is installed
         color = False
         if curses and sys.stderr.isatty():
@@ -337,7 +337,6 @@ def enable_pretty_logging():
         channel = logging.StreamHandler()
         channel.setFormatter(_LogFormatter(color=color))
         logging.getLogger().addHandler(channel)
-
 
 
 class _LogFormatter(logging.Formatter):

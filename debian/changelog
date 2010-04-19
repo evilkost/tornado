@@ -1,3 +1,9 @@
+tornado (0.2~hh13.1) unstable; urgency=low
+
+  * bugfix logging setup to console
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 19 Apr 2010 17:53:22 +0400
+
 tornado (0.2~hh13) unstable; urgency=low
 
   * tornado.web.RequestHandler: do not set default headers at the beginning of request handling
