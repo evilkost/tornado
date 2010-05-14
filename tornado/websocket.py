@@ -19,8 +19,6 @@ import logging
 import tornado.escape
 import tornado.web
 
-_log = logging.getLogger('tornado.websocket')
-
 class WebSocketHandler(tornado.web.RequestHandler):
     """A request handler for HTML 5 Web Sockets.
 
@@ -116,7 +114,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
             try:
                 return callback(*args, **kwargs)
             except Exception, e:
-                _log.error("Uncaught exception in %s",
+                logging.error("Uncaught exception in %s",
                               self.request.path, exc_info=True)
                 self.stream.close()
         return wrapper
@@ -129,6 +127,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
 
     def _on_end_delimiter(self, callback, frame):
         callback(frame[:-1].decode("utf-8", "replace"))
+        self.receive_message(callback)
 
     def _not_supported(self, *args, **kwargs):
         raise Exception("Method not supported for Web Sockets")
