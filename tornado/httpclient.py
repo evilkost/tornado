@@ -30,6 +30,8 @@ import pycurl
 import time
 import weakref
 
+_log = logging.getLogger('tornado.httpclient')
+
 class HTTPClient(object):
     """A blocking HTTP client backed with pycurl.
 
@@ -347,7 +349,7 @@ class CurlError(HTTPError):
 
 def _curl_create(max_simultaneous_connections=None):
     curl = pycurl.Curl()
-    if logging.getLogger().isEnabledFor(logging.DEBUG):
+    if _log.isEnabledFor(logging.DEBUG):
         curl.setopt(pycurl.VERBOSE, 1)
         curl.setopt(pycurl.DEBUGFUNCTION, _curl_debug)
     curl.setopt(pycurl.MAXCONNECTS, max_simultaneous_connections or 5)
@@ -422,11 +424,11 @@ def _curl_setup_request(curl, request, buffer, headers):
         userpwd = "%s:%s" % (request.auth_username, request.auth_password)
         curl.setopt(pycurl.HTTPAUTH, pycurl.HTTPAUTH_BASIC)
         curl.setopt(pycurl.USERPWD, userpwd)
-        logging.info("%s %s (username: %r)", request.method, request.url,
+        _log.info("%s %s (username: %r)", request.method, request.url,
                      request.auth_username)
     else:
         curl.unsetopt(pycurl.USERPWD)
-        logging.info("%s %s", request.method, request.url)
+        _log.info("%s %s", request.method, request.url)
     if request.prepare_curl_callback is not None:
         request.prepare_curl_callback(curl)
 
@@ -439,7 +441,7 @@ def _curl_header_callback(headers, header_line):
         return
     parts = header_line.split(":", 1)
     if len(parts) != 2:
-        logging.warning("Invalid HTTP response header line %r", header_line)
+        _log.warning("Invalid HTTP response header line %r", header_line)
         return
     name = parts[0].strip()
     value = parts[1].strip()
@@ -452,12 +454,12 @@ def _curl_header_callback(headers, header_line):
 def _curl_debug(debug_type, debug_msg):
     debug_types = ('I', '<', '>', '<', '>')
     if debug_type == 0:
-        logging.debug('%s', debug_msg.strip())
+        _log.debug('%s', debug_msg.strip())
     elif debug_type in (1, 2):
         for line in debug_msg.splitlines():
-            logging.debug('%s %s', debug_types[debug_type], line)
+            _log.debug('%s %s', debug_types[debug_type], line)
     elif debug_type == 4:
-        logging.debug('%s %r', debug_types[debug_type], debug_msg)
+        _log.debug('%s %r', debug_types[debug_type], debug_msg)
 
 
 def _utf8(value):
