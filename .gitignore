@@ -10,3 +10,4 @@ debian/python-tornado/
 python-build-stamp-2.5
 dist/
 tornado.egg-info
+tornado.iml

@@ -1,3 +1,10 @@
+tornado (0.2~hh14) unstable; urgency=low
+
+  * merge with facebook/master
+  * revert reverting per-module logging (i.e. keep per-module logging)
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Sat, 15 May 2010 00:17:07 +0400
+
 tornado (0.2~hh13.1) unstable; urgency=low
 
   * bugfix logging setup to console
