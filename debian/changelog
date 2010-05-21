@@ -1,3 +1,9 @@
+tornado (0.2~hh16) unstable; urgency=low
+
+  * make package architecture = all
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Fri, 21 May 2010 15:02:43 +0400
+
 tornado (0.2~hh15) unstable; urgency=low
 
   * add ability to set specific logger for web.RequestHandler
