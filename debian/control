@@ -6,7 +6,7 @@ Build-Depends: cdbs (>= 0.4.49), python-setuptools (>= 0.6b3), debhelper (>= 7),
 Standards-Version: 3.7.2
 
 Package: python-tornado
-Architecture: any
+Architecture: all
 Depends: ${python:Depends}, 
   python-pkg-resources,
   python-pycurl,
