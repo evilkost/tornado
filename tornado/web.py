@@ -504,6 +504,9 @@ class RequestHandler(object):
                 content_length = sum(len(part) for part in self._write_buffer)
                 self.set_header("Content-Length", content_length)
 
+        if hasattr(self.request, "connection"):
+            self.request.connection.stream.set_close_callback(None)
+
         if not self.application._wsgi:
             self.flush(include_footers=True)
             self.request.finish()
