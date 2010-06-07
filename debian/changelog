@@ -1,3 +1,9 @@
+tornado (0.2~hh19) unstable; urgency=low
+
+  * merge with 'facebook/master'
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon,  7 Jun 2010 12:15:23 +0400
+
 tornado (0.2~hh18) unstable; urgency=low
 
   * merge with 'facebook/master'
