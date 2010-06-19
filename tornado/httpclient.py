@@ -123,6 +123,7 @@ class AsyncHTTPClient(object):
             instance._fds = {}
             instance._events = {}
             instance._added_perform_callback = False
+            instance._some_data_received = False
             instance._timeout = None
             instance._closed = False
             cls._ASYNC_CLIENTS[io_loop] = instance
@@ -173,9 +174,19 @@ class AsyncHTTPClient(object):
             return
 
         while True:
+            # .perform() method does not pass more than
+            # CURL_MAX_WRITE_SIZE == 16Kb (compile time constant in
+            # libcurl) to client's write_function at one time. After
+            # writing CMWS it returns E_OK. In order to extract
+            # everything that is available right now from the socket
+            # buffer and libcurl internals we should call .perform()
+            # again even if E_OK was returned. It makes sense to call
+            # .perform() again as long as it calls client's
+            # write_function.
             while True:
+                self._some_data_received = False
                 ret, num_handles = self._multi.perform()
-                if ret != pycurl.E_CALL_MULTI_PERFORM:
+                if ret != pycurl.E_CALL_MULTI_PERFORM and not self._some_data_received:
                     break
 
             # Handle completed fetches
@@ -204,7 +215,7 @@ class AsyncHTTPClient(object):
                     "callback": callback,
                     "start_time": time.time(),
                 }
-                _curl_setup_request(curl, request, curl.info["buffer"],
+                _curl_setup_request(self, curl, request, curl.info["buffer"],
                                     curl.info["headers"])
                 self._multi.add_handle(curl)
 
@@ -246,6 +257,7 @@ class AsyncHTTPClient(object):
             # leak or need to run more tornado processes (so that none
             # of them are handling more than 1000 simultaneous connections)
             print >> sys.stderr, "ERROR: File descriptor too high for libcurl. Exiting."
+            logging.error("File descriptor too high for libcurl. Exiting.")
             sys.exit(1)
 
         for fd in self._fds:
@@ -289,10 +301,16 @@ class AsyncHTTPClient(object):
             code = curl.getinfo(pycurl.HTTP_CODE)
             effective_url = curl.getinfo(pycurl.EFFECTIVE_URL)
             buffer.seek(0)
-        info["callback"](HTTPResponse(
-            request=info["request"], code=code, headers=info["headers"],
-            buffer=buffer, effective_url=effective_url, error=error,
-            request_time=time.time() - info["start_time"]))
+        try:
+            info["callback"](HTTPResponse(
+                request=info["request"], code=code, headers=info["headers"],
+                buffer=buffer, effective_url=effective_url, error=error,
+                request_time=time.time() - info["start_time"]))
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            logging.error("Exception in callback %r", info["callback"],
+                          exc_info=True)
 
 
 class HTTPRequest(object):
@@ -395,7 +413,7 @@ def _curl_create(max_simultaneous_connections=None):
     return curl
 
 
-def _curl_setup_request(curl, request, buffer, headers):
+def _curl_setup_request(client, curl, request, buffer, headers):
     curl.setopt(pycurl.URL, request.url)
     curl.setopt(pycurl.HTTPHEADER,
                 ["%s: %s" % i for i in request.headers.iteritems()])
@@ -404,10 +422,17 @@ def _curl_setup_request(curl, request, buffer, headers):
     else:
         curl.setopt(pycurl.HEADERFUNCTION,
                     lambda line: _curl_header_callback(headers, line))
+
     if request.streaming_callback:
-        curl.setopt(pycurl.WRITEFUNCTION, request.streaming_callback)
+        write_function = request.streaming_callback
     else:
-        curl.setopt(pycurl.WRITEFUNCTION, buffer.write)
+        write_function = buffer.write
+        
+    def raise_flag_and_write(data):
+        client._some_data_received = True
+        return write_function(data)
+
+    curl.setopt(pycurl.WRITEFUNCTION, raise_flag_and_write)
     curl.setopt(pycurl.FOLLOWLOCATION, request.follow_redirects)
     curl.setopt(pycurl.MAXREDIRS, request.max_redirects)
     curl.setopt(pycurl.CONNECTTIMEOUT, int(request.connect_timeout))
