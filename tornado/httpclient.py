@@ -425,11 +425,12 @@ class AsyncHTTPClient2(object):
         if events & ioloop.IOLoop.READ: action |= pycurl.CSELECT_IN
         if events & ioloop.IOLoop.WRITE: action |= pycurl.CSELECT_OUT
         while True:
+            self._some_data_received = False
             try:
                 ret, num_handles = self._multi.socket_action(fd, action)
             except Exception, e:
                 ret = e[0]
-            if ret != pycurl.E_CALL_MULTI_PERFORM:
+            if ret != pycurl.E_CALL_MULTI_PERFORM and not self._some_data_received:
                 break
         self._finish_pending_requests()
 
@@ -473,7 +474,7 @@ class AsyncHTTPClient2(object):
                     "callback": callback,
                     "start_time": time.time(),
                 }
-                _curl_setup_request(curl, request, curl.info["buffer"],
+                _curl_setup_request(self, curl, request, curl.info["buffer"],
                                     curl.info["headers"])
                 self._multi.add_handle(curl)
 
