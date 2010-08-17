@@ -324,6 +324,7 @@ def process_options_logging():
 
 def enable_pretty_logging():
     """Turns on formatted logging output as configured."""
+    root_logger = logging.getLogger()
     if not options.logfile:
         # Set up color if we are in a tty and curses is installed
         color = False
