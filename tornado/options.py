@@ -131,7 +131,7 @@ def parse_command_line(args=None):
     return remaining
 
 
-def parse_config_file(path, overwrite=True):
+def parse_config_file(path):
     """Parses and loads the Python config file at the given path."""
     config = {}
     execfile(path, config, config)
@@ -336,7 +336,7 @@ def enable_pretty_logging():
                 pass
         channel = logging.StreamHandler()
         channel.setFormatter(_LogFormatter(color=color))
-        logging.getLogger().addHandler(channel)
+        root_logger.addHandler(channel)
 
 
 class _LogFormatter(logging.Formatter):

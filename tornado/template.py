@@ -83,10 +83,11 @@ from __future__ import with_statement
 
 import cStringIO
 import datetime
-import escape
 import logging
 import os.path
 import re
+
+from tornado import escape
 
 _log = logging.getLogger('tornado.template')
 
@@ -171,7 +172,7 @@ class Loader(object):
         self.templates = {}
 
     def reset(self):
-      self.templates = {}
+        self.templates = {}
 
     def resolve_path(self, name, parent_path=None):
         if parent_path and not parent_path.startswith("<") and \

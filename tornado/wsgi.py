@@ -50,15 +50,17 @@ frameworks on the Tornado HTTP server and I/O loop. See WSGIContainer for
 details and documentation.
 """
 
-import cgi
 import cStringIO
-import escape
+import cgi
 import httplib
 import logging
 import sys
 import time
 import urllib
-import web
+
+from tornado import escape
+from tornado import httputil
+from tornado import web
 
 _log = logging.getLogger('tornado.wsgi')
 
@@ -102,7 +104,7 @@ class HTTPRequest(object):
                 values = [v for v in values if v]
                 if values: self.arguments[name] = values
         self.version = "HTTP/1.1"
-        self.headers = HTTPHeaders()
+        self.headers = httputil.HTTPHeaders()
         if environ.get("CONTENT_TYPE"):
             self.headers["Content-Type"] = environ["CONTENT_TYPE"]
         if environ.get("CONTENT_LENGTH"):
@@ -166,7 +168,7 @@ class HTTPRequest(object):
             if eoh == -1:
                 _log.warning("multipart/form-data missing headers")
                 continue
-            headers = HTTPHeaders.parse(part[:eoh])
+            headers = httputil.HTTPHeaders.parse(part[:eoh])
             name_header = headers.get("Content-Disposition", "")
             if not name_header.startswith("form-data;") or \
                not part.endswith("\r\n"):
@@ -294,24 +296,3 @@ class WSGIContainer(object):
         summary = request.method + " " + request.uri + " (" + \
             request.remote_ip + ")"
         log_method("%d %s %.2fms", status_code, summary, request_time)
-
-
-class HTTPHeaders(dict):
-    """A dictionary that maintains Http-Header-Case for all keys."""
-    def __setitem__(self, name, value):
-        dict.__setitem__(self, self._normalize_name(name), value)
-
-    def __getitem__(self, name):
-        return dict.__getitem__(self, self._normalize_name(name))
-
-    def _normalize_name(self, name):
-        return "-".join([w.capitalize() for w in name.split("-")])
-
-    @classmethod
-    def parse(cls, headers_string):
-        headers = cls()
-        for line in headers_string.splitlines():
-            if line:
-                name, value = line.split(":", 1)
-                headers[name] = value.strip()
-        return headers

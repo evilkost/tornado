@@ -25,7 +25,7 @@ except ImportError:
 
 distutils.core.setup(
     name="tornado",
-    version="0.2",
+    version="1.0",
     packages = ["tornado"],
     author="Facebook",
     author_email="python-tornado@googlegroups.com",

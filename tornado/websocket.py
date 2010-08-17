@@ -16,12 +16,13 @@
 
 import functools
 import logging
-import tornado.escape
-import tornado.web
+
+from tornado import escape
+from tornado import web
 
 _log = logging.getLogger('tornado.websocket')
 
-class WebSocketHandler(tornado.web.RequestHandler):
+class WebSocketHandler(web.RequestHandler):
     """A request handler for HTML 5 Web Sockets.
 
     See http://www.w3.org/TR/2009/WD-websockets-20091222/ for details on the
@@ -62,7 +63,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
     This script pops up an alert box that says "You said: Hello, world".
     """
     def __init__(self, application, request):
-        tornado.web.RequestHandler.__init__(self, application, request)
+        web.RequestHandler.__init__(self, application, request)
         self.stream = request.connection.stream
 
     def _execute(self, transforms, *args, **kwargs):
@@ -87,7 +88,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
     def write_message(self, message):
         """Sends the given message to the client of this Web Socket."""
         if isinstance(message, dict):
-            message = tornado.escape.json_encode(message)
+            message = escape.json_encode(message)
         if isinstance(message, unicode):
             message = message.encode("utf-8")
         assert isinstance(message, str)
