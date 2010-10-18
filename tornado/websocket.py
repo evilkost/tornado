@@ -16,10 +16,13 @@
 
 import functools
 import logging
-import tornado.escape
-import tornado.web
 
-class WebSocketHandler(tornado.web.RequestHandler):
+from tornado import escape
+from tornado import web
+
+_log = logging.getLogger('tornado.websocket')
+
+class WebSocketHandler(web.RequestHandler):
     """A request handler for HTML 5 Web Sockets.
 
     See http://www.w3.org/TR/2009/WD-websockets-20091222/ for details on the
@@ -34,7 +37,10 @@ class WebSocketHandler(tornado.web.RequestHandler):
               self.receive_message(self.on_message)
 
           def on_message(self, message):
-             self.write_message(u"You said: " + message)
+              self.write_message(u"You said: " + message)
+              # receive_message only reads a single message, so call it
+              # again to listen for the next one
+              self.receive_message(self.on_message)
 
     Web Sockets are not standard HTTP connections. The "handshake" is HTTP,
     but after the handshake, the protocol is message-based. Consequently,
@@ -57,7 +63,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
     This script pops up an alert box that says "You said: Hello, world".
     """
     def __init__(self, application, request):
-        tornado.web.RequestHandler.__init__(self, application, request)
+        web.RequestHandler.__init__(self, application, request)
         self.stream = request.connection.stream
 
     def _execute(self, transforms, *args, **kwargs):
@@ -82,7 +88,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
     def write_message(self, message):
         """Sends the given message to the client of this Web Socket."""
         if isinstance(message, dict):
-            message = tornado.escape.json_encode(message)
+            message = escape.json_encode(message)
         if isinstance(message, unicode):
             message = message.encode("utf-8")
         assert isinstance(message, str)
@@ -114,7 +120,7 @@ class WebSocketHandler(tornado.web.RequestHandler):
             try:
                 return callback(*args, **kwargs)
             except Exception, e:
-                logging.error("Uncaught exception in %s",
+                _log.error("Uncaught exception in %s",
                               self.request.path, exc_info=True)
                 self.stream.close()
         return wrapper

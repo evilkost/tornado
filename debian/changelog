@@ -1,8 +1,94 @@
-python-tornado (0.5) unstable; urgency=low
+tornado (1.0.1~hh1) unstable; urgency=low
 
-  * pull  from elephantum branch
+  * merge with 'facebook/master'
 
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Tue, 16 Feb 2010 20:02:10 +0300
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 17 Aug 2010 17:16:28 +0400
+
+tornado (0.2~hh19) unstable; urgency=low
+
+  * merge with 'facebook/master'
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon,  7 Jun 2010 12:15:23 +0400
+
+tornado (0.2~hh18) unstable; urgency=low
+
+  * merge with 'facebook/master'
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon,  7 Jun 2010 01:23:23 +0400
+
+tornado (0.2~hh17) unstable; urgency=low
+
+  * clean on_connection_close callback as soon as it stops being useful
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 25 May 2010 14:50:51 +0400
+
+tornado (0.2~hh16.1) unstable; urgency=low
+
+  * fix control
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Fri, 21 May 2010 15:17:13 +0400
+
+tornado (0.2~hh16) unstable; urgency=low
+
+  * make package architecture = all
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Fri, 21 May 2010 15:02:43 +0400
+
+tornado (0.2~hh15) unstable; urgency=low
+
+  * add ability to set specific logger for web.RequestHandler
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Thu, 20 May 2010 00:22:42 +0400
+
+tornado (0.2~hh14) unstable; urgency=low
+
+  * merge with facebook/master
+  * revert reverting per-module logging (i.e. keep per-module logging)
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Sat, 15 May 2010 00:17:07 +0400
+
+tornado (0.2~hh13.1) unstable; urgency=low
+
+  * bugfix logging setup to console
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 19 Apr 2010 17:53:22 +0400
+
+tornado (0.2~hh13) unstable; urgency=low
+
+  * tornado.web.RequestHandler: do not set default headers at the beginning of request handling
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Fri, 16 Apr 2010 19:41:22 +0400
+
+tornado (0.2~hh12) unstable; urgency=low
+
+  * merge with facebook/tornado
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 06 Apr 2010 19:05:22 +0400
+
+tornado (0.2~hh11) unstable; urgency=low
+
+  * merge with facebook/tornado
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue, 23 Mar 2010 15:50:22 +0400
+
+tornado (0.2~hh10.1) unstable; urgency=low
+
+  * bugfix tornado.options
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue,  2 Mar 2010 17:12:20 +0400
+
+tornado (0.2~hh10) unstable; urgency=low
+
+  * merge with facebook/tornado
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue,  2 Mar 2010 16:51:22 +0400
+
+tornado (0.2~hh9) unstable; urgency=low
+
+  * add arbitary files watchlist in tornado.autoreload
+  * remove tornado.options.parse_config_files
+
+ -- Andrey Tatarinov <a.tatarinov@hh.ru>  Tue,  2 Mar 2010 13:26:43 +0400
 
 tornado (0.2~hh8) unstable; urgency=low
 
@@ -27,34 +113,4 @@ tornado (0.2~hh5ubuntu1) karmic; urgency=low
   * rebuild on ubuntu
 
  -- Andrey Tatarinov <a.tatarinov@hh.ru>  Mon, 18 Jan 2010 00:12:45 +0300
-
-tornado (0.2~hh5) unstable; urgency=low
-
-  * merged from facebook upstream;
-
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Mon, 21 Dec 2009 19:09:55 +0300
-
-python-tornado (0.4) unstable; urgency=low
-
-  * merged from elephantum branch
-
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Mon, 21 Dec 2009 19:04:31 +0300
-
-python-tornado (0.3) hardy; urgency=low
-
-  * rebuild
-
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Thu, 12 Nov 2009 16:06:36 +0300
-
-python-tornado (0.2) hardy; urgency=low
-
-  * Pull from upstream 0.2 version
-
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Fri, 18 Sep 2009 15:38:18 +0400
-
-python-tornado (0.1) unstable; urgency=low
-
-  * Initial release 
-
- -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Wed, 16 Sep 2009 17:56:58 +0400
 

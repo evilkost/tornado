@@ -7,11 +7,12 @@ Build-Depends: cdbs (>= 0.4.49), python-setuptools (>= 0.6b3), debhelper (>= 5),
 Standards-Version: 3.7.2
 
 Package: python-tornado
-Architecture: any
-XB-Python-Version: >= 2.5
-Depends: python-pycurl (>= 7.16.2.1), python-pkg-resources, python-simplejson, ${shlibs:Depends}, ${misc:Depends}
-Description: tornado web server
- Tornado is an open source version of the scalable, non-blocking web server
- and and tools that power FriendFeed. Documentation and downloads are
- available at http://www.tornadoweb.org/
+Architecture: all
+Depends: ${python:Depends}, 
+  python-pkg-resources,
+  python-pycurl,
+Recommends: python-simplejson 
+Suggests: 
+Provides: ${python:Provides}
+Description: Tornado
 

@@ -21,36 +21,65 @@ and Google AppEngine.
 """
 
 import functools
-import ioloop
 import logging
 import os
-import os.path
 import sys
+import types
 
+from tornado import ioloop
 
-def start(io_loop=None, check_time=500, watch_paths=[]):
+try:
+    import signal
+except ImportError:
+    signal = None
+
+_log = logging.getLogger('tornado.autoreload')
+
+def start(io_loop=None, check_time=500):
     """Restarts the process automatically when a module is modified.
-
+                                                                                                                                            `
     We run on the I/O loop, and restarting is a destructive operation,
     so will terminate any pending requests.
     """
     io_loop = io_loop or ioloop.IOLoop.instance()
     modify_times = {}
-    callback = functools.partial(_reload_on_update, io_loop, modify_times, watch_paths)
+    callback = functools.partial(_reload_on_update, io_loop, modify_times)
     scheduler = ioloop.PeriodicCallback(callback, check_time, io_loop=io_loop)
     scheduler.start()
 
+# global list of watched files
+# typical use case: monitor changes in config and reload app
+_watched_files = list()
 
-def _reload_on_update(io_loop, modify_times, watch_paths=[]):
-    files = [getattr(module, "__file__", None) for module in sys.modules.values()]
+def watch_file(filename):
+    _log.debug('watch file %s', filename)
+    _watched_files.append(filename)
 
-    for path in watch_paths + files:
-        if not path: 
-            continue
+_reload_attempted = False
 
+def _get_modules_files():
+    modules_files = []
+    for module in sys.modules.values():
+        # Some modules play games with sys.modules (e.g. email/__init__.py
+        # in the standard library), and occasionally this can cause strange
+        # failures in getattr.  Just ignore anything that's not an ordinary
+        # module.
+        if not isinstance(module, types.ModuleType): continue
+        path = getattr(module, "__file__", None)
+        if not path: continue
         if path.endswith(".pyc") or path.endswith(".pyo"):
             path = path[:-1]
 
+        modules_files.append(path)
+    return modules_files
+
+def _reload_on_update(io_loop, modify_times):
+    global _reload_attempted
+    if _reload_attempted:
+        # We already tried to reload and it didn't work, so don't try again.
+        return
+
+    for path in _get_modules_files() + _watched_files:
         try:
             modified = os.stat(path).st_mtime
         except:
@@ -60,10 +89,32 @@ def _reload_on_update(io_loop, modify_times, watch_paths=[]):
             modify_times[path] = modified
             continue
         if modify_times[path] != modified:
-            logging.info("%s modified; restarting server", path)
+            _log.info("%s modified; restarting server", path)
+            _reload_attempted = True
             for fd in io_loop._handlers.keys():
                 try:
                     os.close(fd)
                 except:
                     pass
-            os.execv(sys.executable, [sys.executable] + sys.argv)
+            if hasattr(signal, "setitimer"):
+                # Clear the alarm signal set by
+                # ioloop.set_blocking_log_threshold so it doesn't fire
+                # after the exec.
+                signal.setitimer(signal.ITIMER_REAL, 0, 0)
+            try:
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+            except OSError:
+                # Mac OS X versions prior to 10.6 do not support execv in
+                # a process that contains multiple threads.  Instead of
+                # re-executing in the current process, start a new one
+                # and cause the current process to exit.  This isn't
+                # ideal since the new process is detached from the parent
+                # terminal and thus cannot easily be killed with ctrl-C,
+                # but it's better than not being able to autoreload at
+                # all.
+                # Unfortunately the errno returned in this case does not
+                # appear to be consistent, so we can't easily check for
+                # this error specifically.
+                os.spawnv(os.P_NOWAIT, sys.executable,
+                          [sys.executable] + sys.argv)
+                sys.exit(0)

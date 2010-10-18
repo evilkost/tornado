@@ -16,20 +16,17 @@
 
 import distutils.core
 import sys
-
-# Build the epoll extension for Linux systems with Python < 2.6
-extensions = []
-major, minor = sys.version_info[:2]
-python_26 = (major > 2 or (major == 2 and minor >= 6))
-if "linux" in sys.platform.lower() and not python_26:
-    extensions.append(distutils.core.Extension(
-        "tornado.epoll", ["tornado/epoll.c"]))
+# Importing setuptools adds some features like "setup.py develop", but
+# it's optional so swallow the error if it's not there.
+try:
+    import setuptools
+except ImportError:
+    pass
 
 distutils.core.setup(
     name="tornado",
-    version="0.2",
+    version="1.0",
     packages = ["tornado"],
-    ext_modules = extensions,
     author="Facebook",
     author_email="python-tornado@googlegroups.com",
     url="http://www.tornadoweb.org/",

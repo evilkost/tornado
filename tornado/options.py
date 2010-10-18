@@ -50,9 +50,11 @@ for define() below.
 
 import datetime
 import logging
+import logging.handlers
 import re
 import sys
-import os.path
+import time
+import os
 
 # For pretty log messages, if available
 try:
@@ -129,7 +131,7 @@ def parse_command_line(args=None):
     return remaining
 
 
-def parse_config_file(path, overwrite=True):
+def parse_config_file(path):
     """Parses and loads the Python config file at the given path."""
     config = {}
     execfile(path, config, config)
@@ -137,19 +139,6 @@ def parse_config_file(path, overwrite=True):
         if name in options:
             options[name].set(config[name])
 
-
-def parse_config_files(paths):
-    """Tries to parse and load every Python config in given order, 
-    ignores missing files.
-    Returns list of actually loaded files."""
-    
-    configs = []
-    for config_name in paths:
-        if os.path.exists(config_name):
-            parse_config_file(config_name)
-            configs.append(config_name)
-    
-    return configs
 
 def print_help(file=sys.stdout):
     """Prints all the command line options to stdout."""
@@ -182,7 +171,7 @@ class _Options(dict):
     def __getattr__(self, name):
         if isinstance(self.get(name), _Option):
             return self[name].value()
-        raise Error("Unrecognized option %r" % name)
+        raise AttributeError("Unrecognized option %r" % name)
 
 
 class _Option(object):
@@ -332,30 +321,38 @@ def process_options_logging():
         logging.getLogger().setLevel(level)
         enable_pretty_logging()
 
+
 def enable_pretty_logging():
-    """Turns on colored logging output for stderr if we are in a tty."""
-    if not curses: return
-    try:
-        if not sys.stderr.isatty(): return
-        curses.setupterm()
-    except:
-        return
-    channel = logging.StreamHandler()
-    channel.setFormatter(_ColorLogFormatter())
-    logging.getLogger().addHandler(channel)
+    """Turns on formatted logging output as configured."""
+    root_logger = logging.getLogger()
+    if not options.logfile:
+        # Set up color if we are in a tty and curses is installed
+        color = False
+        if curses and sys.stderr.isatty():
+            try:
+                curses.setupterm()
+                if curses.tigetnum("colors") > 0:
+                    color = True
+            except:
+                pass
+        channel = logging.StreamHandler()
+        channel.setFormatter(_LogFormatter(color=color))
+        root_logger.addHandler(channel)
 
 
-class _ColorLogFormatter(logging.Formatter):
-    def __init__(self, *args, **kwargs):
+class _LogFormatter(logging.Formatter):
+    def __init__(self, color, *args, **kwargs):
         logging.Formatter.__init__(self, *args, **kwargs)
-        fg_color = curses.tigetstr("setaf") or curses.tigetstr("setf") or ""
-        self._colors = {
-            logging.DEBUG: curses.tparm(fg_color, 4), # Blue
-            logging.INFO: curses.tparm(fg_color, 2), # Green
-            logging.WARNING: curses.tparm(fg_color, 3), # Yellow
-            logging.ERROR: curses.tparm(fg_color, 1), # Red
-        }
-        self._normal = curses.tigetstr("sgr0")
+        self._color = color
+        if color:
+            fg_color = curses.tigetstr("setaf") or curses.tigetstr("setf") or ""
+            self._colors = {
+                logging.DEBUG: curses.tparm(fg_color, 4), # Blue
+                logging.INFO: curses.tparm(fg_color, 2), # Green
+                logging.WARNING: curses.tparm(fg_color, 3), # Yellow
+                logging.ERROR: curses.tparm(fg_color, 1), # Red
+            }
+            self._normal = curses.tigetstr("sgr0")
 
     def format(self, record):
         try:
@@ -365,8 +362,10 @@ class _ColorLogFormatter(logging.Formatter):
         record.asctime = self.formatTime(record)
         prefix = '[%(levelname)1.1s %(asctime)s %(name)s]' % \
             record.__dict__
-        color = self._colors.get(record.levelno, self._normal)
-        formatted = color + prefix + self._normal + " " + record.message
+        if self._color:
+            prefix = (self._colors.get(record.levelno, self._normal) +
+                      prefix + self._normal)
+        formatted = prefix + " " + record.message
         if record.exc_info:
             if not record.exc_text:
                 record.exc_text = self.formatException(record.exc_info)
