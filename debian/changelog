@@ -1,4 +1,10 @@
-tornado (1.0.1~hh1) unstable; urgency=low
+python-tornado (1.0.11) unstable; urgency=low
+
+  * rebuild
+
+ -- Valentin Gologuzov (vgol) <vgol@yandex-team.ru>  Mon, 18 Oct 2010 21:07:56 +0400
+
+python-tornado (1.0.1~hh1) unstable; urgency=low
 
   * merge with 'facebook/master'
 
